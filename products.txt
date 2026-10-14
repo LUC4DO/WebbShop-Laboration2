@@ -1,0 +1,5 @@
+B0001;Clean Code;500.0;En bok som handlar om att skriva kod enligt standard praxis
+B0002;Oliver Twist;1000.0;Fattig Pojke
+B0003;Lord Of The Mysteries;300.0;Klein Moretti is The Fool
+B0004;Reverend Insanity;250.0;Gu Yue Fang Yuan Ã¤r Goat
+B0005;Shadow Slave;50.0;Har inte lÃ¤st
