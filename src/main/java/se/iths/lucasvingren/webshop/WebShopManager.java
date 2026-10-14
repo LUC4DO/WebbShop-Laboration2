@@ -10,9 +10,11 @@ import java.util.List;
 public class WebShopManager {
     private final ProductStorage productStorage;
     private Discount discount;
+    private final OutInputHandler outInputHandler;
 
-    public WebShopManager(ProductStorage productStorage) {
+    public WebShopManager(ProductStorage productStorage, OutInputHandler outInputHandler) {
         this.productStorage = productStorage;
+        this.outInputHandler = outInputHandler;
     }
 
     void saveProductToStorage(Product product) {
@@ -29,7 +31,7 @@ public class WebShopManager {
 
     void startWebshop() {
 
-        String discountAnswer = IO.readln("Snälla mata in din rabattkod, annars mata in N för att fortsätta utan:\n");
+        String discountAnswer = outInputHandler.prompt("Snälla mata in din rabattkod, annars mata in N för att fortsätta utan:\n");
         if (discountAnswer.equalsIgnoreCase("halfprice")) {
             discount = new HalfPriceDiscount("50% Rabatt!");
         } else {
@@ -38,25 +40,23 @@ public class WebShopManager {
 
         boolean exit = false;
         while (!exit) {
-            String menyChoice = IO.readln("Mata in 1: Lägg till produkt\n"
-                    + "Mata in 2: Lista alla produkter\n"
-                    + "Mata in 3: Visa information om en produkt\n"
-                    + "Mata in 4: Avsluta applikationen\n");
+            String menyChoice = outInputHandler.menu();
+
             switch (menyChoice) {
                 case "1" -> alternative1();
                 case "2" -> alternative2();
                 case "3" -> alternative3();
                 case "4" -> exit = true;
-                default -> IO.println("Felaktig Input, Försök igen\n");
+                default -> outInputHandler.info("Felaktig Input, Försök igen\n");
             }
         }
     }
 
     private void alternative1() {
-        String articleNumber = IO.readln("Mata in artikelnummer:\n");
-        String title = IO.readln("Mata in titeln:\n");
-        double price = Double.parseDouble(IO.readln("Mata in priset:\n"));
-        String description = IO.readln("Mata in beskrivningen\n");
+        String articleNumber = outInputHandler.prompt("Mata in artikelnummer:\n");
+        String title = outInputHandler.prompt("Mata in titeln:\n");
+        double price = Double.parseDouble(outInputHandler.prompt("Mata in priset:\n"));
+        String description = outInputHandler.prompt("Mata in beskrivningen\n");
 
         Product product = new Product(articleNumber, title, price, description);
         saveProductToStorage(product);
@@ -65,31 +65,42 @@ public class WebShopManager {
     private void alternative2() {
         List<Product> productList = getProductsFromStorage();
 
-        for (Product product : productList) {
-            IO.println("Artikelnummer: " + product.getArticleNumber());
-            IO.println("Titel: " + product.getTitle());
-            IO.println("Pris: " + product.getPrice() + " kr");
-            IO.println("Beskrivning; " + product.getDescription());
-
-            double discountedPrice = discount.calculatePrice(product.getPrice());
-            IO.println("Rabatterade pris: " + discountedPrice + " kr\n");
+        if (productList.isEmpty()) {
+            outInputHandler.info("Det finns inga produkter att visa");
+            return;
         }
+
+        StringBuilder message = new StringBuilder();
+
+        for (Product product : productList) {
+            double discountedPrice = discount.calculatePrice(product.getPrice());
+
+            message.append("Artikelnummer: ").append(product.getArticleNumber()).append("\n")
+                    .append("Titel: ").append(product.getTitle()).append("\n")
+                    .append("Pris: ").append(product.getPrice()).append(" kr\n")
+                    .append("Beskrivning: ").append(product.getDescription()).append("\n")
+                    .append("Rabatterat pris: ").append(discountedPrice).append(" kr\n\n");
+        }
+
+        outInputHandler.info(message.toString());
     }
 
     private void alternative3() {
-        String articleNumber = IO.readln("Vänligen mata in ett artikelnummer:\n");
+        String articleNumber = outInputHandler.prompt("Vänligen mata in ett artikelnummer:\n");
         Product product = getProductFromStorage(articleNumber);
 
         if (product == null) {
-            IO.println("Det finns ingen produkt med motsvarande artikelnummer :(\n");
+            outInputHandler.info("Det finns ingen produkt med motsvarande artikelnummer :(\n");
             return;
         }
-        IO.println("Artikelnummer: " + product.getArticleNumber());
-        IO.println("Titel: " + product.getTitle());
-        IO.println("Pris: " + product.getPrice());
-        IO.println("Beskrivning; " + product.getDescription());
 
         double discountedPrice = discount.calculatePrice(product.getPrice());
-        IO.println("Rabatterade pris: " + discountedPrice + " kr\n");
+        String message = "Artikelnummer: " + product.getArticleNumber() + "\n"
+                + "Titel: " + product.getTitle() + "\n"
+                + "Pris: " + product.getPrice() + " kr\n"
+                + "Beskrivning: " + product.getDescription() + "\n"
+                + "Rabatterat pris: " + discountedPrice + " kr\n";
+
+        outInputHandler.info(message);
     }
 }
